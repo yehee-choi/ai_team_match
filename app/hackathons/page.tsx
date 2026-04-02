@@ -100,9 +100,16 @@ export default function HackathonsPage() {
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLOR[h.status]}`}>
                   {STATUS_LABEL[h.status]}
                 </span>
-                <span className="text-xs text-gray-400">
-                  {h.period.endAt.slice(0, 10)}
-                </span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="text-xs text-gray-400">
+                    ~ {h.period.endAt.slice(0, 10)}
+                  </span>
+                  {h.period.submissionDeadlineAt && (
+                    <span className="text-xs text-orange-400">
+                      제출 {h.period.submissionDeadlineAt.slice(0, 10)}
+                    </span>
+                  )}
+                </div>
               </div>
               <h2 className="font-semibold text-gray-900 leading-snug">{h.title}</h2>
               <div className="flex flex-wrap gap-1.5 mt-auto">

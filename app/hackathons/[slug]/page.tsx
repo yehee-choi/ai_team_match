@@ -73,6 +73,30 @@ export default function HackathonDetailPage() {
               </ul>
             </div>
           )}
+          {s.info?.links && (
+            <div className="flex gap-4">
+              {s.info.links.rules && (
+                <a
+                  href={s.info.links.rules}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  📋 규정 보기
+                </a>
+              )}
+              {s.info.links.faq && (
+                <a
+                  href={s.info.links.faq}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  ❓ FAQ 보기
+                </a>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -444,19 +468,52 @@ function LeaderboardTable({ slug }: { slug: string }) {
           <tr className="text-left text-gray-500 border-b border-gray-100">
             <th className="pb-2 w-12">순위</th>
             <th className="pb-2">팀명</th>
-            <th className="pb-2 text-right">점수</th>
+            <th className="pb-2 text-center">세부 점수</th>
+            <th className="pb-2 text-right">최종 점수</th>
           </tr>
         </thead>
         <tbody>
           {entries.length === 0 ? (
             <tr>
-              <td colSpan={3} className="py-8 text-center text-gray-400">제출 내역이 없습니다.</td>
+              <td colSpan={4} className="py-8 text-center text-gray-400">제출 내역이 없습니다.</td>
             </tr>
           ) : (
             entries.map((e: any) => (
               <tr key={e.rank} className="border-b border-gray-50">
                 <td className="py-2 font-bold text-blue-600">#{e.rank}</td>
-                <td className="py-2 text-gray-800">{e.teamName}</td>
+                <td className="py-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-800">{e.teamName}</span>
+                    {e.artifacts && (
+                      <div className="flex gap-2 flex-wrap">
+                        {e.artifacts.webUrl && (
+                          <a href={e.artifacts.webUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-500 hover:underline">
+                            🔗 웹사이트
+                          </a>
+                        )}
+                        {e.artifacts.pdfUrl && (
+                          <a href={e.artifacts.pdfUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-blue-500 hover:underline">
+                            📄 솔루션 PDF
+                          </a>
+                        )}
+                        {e.artifacts.planTitle && (
+                          <span className="text-xs text-gray-400">{e.artifacts.planTitle}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="py-2 text-center">
+                  {e.scoreBreakdown ? (
+                    <div className="flex gap-2 justify-center text-xs text-gray-500">
+                      <span>참가자 {e.scoreBreakdown.participant}</span>
+                      <span>·</span>
+                      <span>심사위원 {e.scoreBreakdown.judge}</span>
+                    </div>
+                  ) : <span className="text-xs text-gray-300">-</span>}
+                </td>
                 <td className="py-2 text-right font-semibold">{e.score}</td>
               </tr>
             ))
