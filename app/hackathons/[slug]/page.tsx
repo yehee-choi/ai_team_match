@@ -10,6 +10,7 @@ export default function HackathonDetailPage() {
   const [detail, setDetail] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('overview')
 
+
   useEffect(() => {
     const data = storageGet<any>('hackathon_detail')
     if (!data) return
@@ -442,15 +443,20 @@ function LeaderboardTable({ slug }: { slug: string }) {
   const [entries, setEntries] = useState<any[]>([])
   const [teams, setTeams] = useState<any[]>([])
   const [submissions, setSubmissions] = useState<Record<string, any>>({})
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null) 
 
   useEffect(() => {
     const data = storageGet<any>('leaderboard')
     if (!data) return
     if (data.hackathonSlug === slug) {
       setEntries(data.entries)
+      setUpdatedAt(data.updatedAt)
     } else {
       const extra = data.extraLeaderboards?.find((e: any) => e.hackathonSlug === slug)
-      if (extra) setEntries(extra.entries)
+      if (extra) {
+        setEntries(extra.entries)
+        setUpdatedAt(extra.updatedAt)
+      }
     }
     const allTeams = storageGet<any[]>('teams') ?? []
     setTeams(allTeams.filter((t) => t.hackathonSlug === slug))
@@ -463,6 +469,11 @@ function LeaderboardTable({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {updatedAt && (
+        <p className="text-xs text-gray-400 text-right mb-2">
+          업데이트: {updatedAt.slice(0, 16).replace('T', ' ')}
+        </p>
+      )}
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-gray-500 border-b border-gray-100">

@@ -18,6 +18,15 @@ const STATUS_COLOR: Record<string, string> = {
   ended: 'bg-gray-100 text-gray-500',
 }
 
+// 파일 상단 STATUS_COLOR 아래에 추가
+function getDday(endAt: string): string {
+  const diff = Math.ceil((new Date(endAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  if (diff < 0) return '종료'
+  if (diff === 0) return 'D-day'
+  return `D-${diff}`
+}
+
+
 export default function HackathonsPage() {
   const [hackathons, setHackathons] = useState<Hackathon[]>([])
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -101,9 +110,13 @@ export default function HackathonsPage() {
                   {STATUS_LABEL[h.status]}
                 </span>
                 <div className="flex flex-col items-end gap-0.5">
-                  <span className="text-xs text-gray-400">
-                    ~ {h.period.endAt.slice(0, 10)}
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${getDday(h.period.endAt) === '종료' ? 'text-gray-400' :
+                      getDday(h.period.endAt) === 'D-day' ? 'text-red-500 bg-red-50' :
+                        'text-orange-500 bg-orange-50'
+                    }`}>
+                    {getDday(h.period.endAt)}
                   </span>
+                  <span className="text-xs text-gray-400">~ {h.period.endAt.slice(0, 10)}</span>
                   {h.period.submissionDeadlineAt && (
                     <span className="text-xs text-orange-400">
                       제출 {h.period.submissionDeadlineAt.slice(0, 10)}

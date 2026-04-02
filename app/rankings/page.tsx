@@ -18,6 +18,8 @@ export default function RankingsPage() {
   const [entries, setEntries] = useState<any[]>([])
   const [period, setPeriod] = useState('all')
 
+  const [hackathonFilter, setHackathonFilter] = useState('all')
+  const [hackathonSlugs, setHackathonSlugs] = useState<string[]>([])
   useEffect(() => {
     try {
       const leaderboard = storageGet<any>('leaderboard')
@@ -31,13 +33,21 @@ export default function RankingsPage() {
           lb.entries.map((e: any) => ({ ...e, hackathonSlug: lb.hackathonSlug }))
         ) ?? []),
       ]
+      const slugs = Array.from(new Set([
+        leaderboard.hackathonSlug,
+        ...(leaderboard.extraLeaderboards?.map((lb: any) => lb.hackathonSlug) ?? [])
+      ]))
+      setHackathonSlugs(slugs)
+
       const now = new Date()
       const filtered = all.filter((e) => {
-        if (period === 'all') return true
-        const days = parseInt(period)
-        const diff = (now.getTime() - new Date(e.submittedAt).getTime()) / (1000 * 60 * 60 * 24)
-        return diff <= days
+        const matchPeriod = period === 'all' ||
+          ((now.getTime() - new Date(e.submittedAt).getTime()) / (1000 * 60 * 60 * 24)) <= parseInt(period)
+        const matchHackathon = hackathonFilter === 'all' || e.hackathonSlug === hackathonFilter
+        return matchPeriod && matchHackathon
       })
+
+
       const sorted = filtered.sort((a, b) => b.score - a.score)
       const ranked = sorted.map((e, i) => ({ ...e, rank: i + 1 }))
       setEntries(ranked)
@@ -46,7 +56,7 @@ export default function RankingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [period, hackathonFilter])
 
   if (loading) return <LoadingUI />
   if (error) return <ErrorUI />
@@ -66,6 +76,21 @@ export default function RankingsPage() {
               }`}
           >
             {opt.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mb-8 flex-wrap">
+        {['all', ...hackathonSlugs].map((slug) => (
+          <button
+            key={slug}
+            onClick={() => setHackathonFilter(slug)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${hackathonFilter === slug
+              ? 'bg-gray-800 text-white border-gray-800'
+              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              }`}
+          >
+            {slug === 'all' ? '전체 해커톤' : slug}
           </button>
         ))}
       </div>
