@@ -1,17 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
 import { initSeedData } from '@/lib/seed'
 import Navbar from '@/components/layout/Navbar'
+
+initSeedData()
 
 export default function ClientLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  useEffect(() => {
-    initSeedData()
-  }, [])
 
   return (
     <>
