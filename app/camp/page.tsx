@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { storageGet, storageSet } from '@/lib/storage'
 import { Team } from '@/lib/types'
@@ -12,7 +12,7 @@ interface AIRecommendation {
   reason: string
 }
 
-export default function CampPage() {
+function CampContent() {
   const searchParams = useSearchParams()
   const hackathonFilter = searchParams.get('hackathon') ?? 'all'
 
@@ -313,5 +313,13 @@ export default function CampPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function CampPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20 text-gray-400">로딩 중...</div>}>
+      <CampContent />
+    </Suspense>
   )
 }
