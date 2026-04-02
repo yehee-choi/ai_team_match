@@ -46,6 +46,7 @@ export default function RankingsPage() {
         const matchHackathon = hackathonFilter === 'all' || e.hackathonSlug === hackathonFilter
         return matchPeriod && matchHackathon
       })
+      //x
 
 
       const sorted = filtered.sort((a, b) => b.score - a.score)
