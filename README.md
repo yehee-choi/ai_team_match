@@ -1,36 +1,189 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🤖 AI 팀 매치 — 해커톤 팀 빌딩 플랫폼
 
-## Getting Started
+> **월간 해커톤 : 바이브 코딩 개선 AI 아이디어 공모전 (2026.02)** 제출작  
+> 제공된 명세서와 JSON 데이터를 기반으로 구현한 해커톤 플랫폼 + Claude AI 팀 매칭 추천
 
-First, run the development server:
+🔗 **배포 URL**: [Vercel 배포 링크]  
+📁 **GitHub**: https://github.com/yehee-choi/ai_team_match
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 📌 프로젝트 소개
+
+해커톤 참가자가 **AI 추천으로 팀을 찾고**, 플랫폼 안에서 바로 합류 신청 및 쪽지 전송까지 완결하는 해커톤 플랫폼입니다.
+
+---
+
+## 🛠 기술 스택
+
+| 구분 | 내용 |
+|------|------|
+| 프레임워크 | Next.js 14 (App Router) |
+| 스타일링 | Tailwind CSS v4 |
+| 데이터 저장 | localStorage (JSON 시드 기반) |
+| AI 기능 | Claude API (`claude-sonnet-4-20250514`) — Next.js API Route 경유 |
+| 배포 | Vercel |
+
+---
+
+## ✅ 명세서 필수 기능 구현 현황
+
+제공된 명세서와 JSON 4종(`hackathons`, `hackathon_detail`, `teams`, `leaderboard`)의 모든 데이터를 화면에 반영했습니다.
+
+### 1. 해커톤 목록 (`/hackathons`)
+- 해커톤 카드 리스트 표시
+- **상태 필터** (진행 중 / 예정 / 종료 / 전체)
+- **태그 필터** (JSON의 tags 기반 동적 생성)
+- 카드 클릭 시 상세 페이지 이동
+- **D-day 뱃지** 표시 (종료 / D-day / D-n)
+- 제출 마감일 표시
+
+### 2. 해커톤 상세 (`/hackathons/:slug`)
+7개 섹션 탭을 모두 구현했으며, 각 탭은 JSON 데이터를 그대로 반영합니다.
+
+| 탭 | 구현 내용 |
+|----|----------|
+| 개요 | 대회 소개, 팀 구성 정책(솔로/최대 인원), 공지사항, 규정/FAQ 링크 |
+| 평가 | 평가 지표명, 설명, 최대 실행시간/일일 제출 횟수, 투표 점수 바 차트 |
+| 일정 | 세로 타임라인, 지난 날짜 흐리게, 현재 단계 강조 + "진행 중" 배지 |
+| 상금 | 순위별 상금 목록 |
+| 팀 | 해당 해커톤 팀 목록, 참여 신청/수락/거절, AI 팀 매칭, 연락하기 |
+| 제출 | 해커톤별 폼(zip 파일명 or 3단계 URL), 메모 필드, 팀명 입력 |
+| 리더보드 | 순위 + 세부 점수(참가자/심사위원) + artifacts 링크 + 미제출 팀 표기 + updatedAt |
+
+> ⚠️ `monthly-vibe-coding-2026-02`는 `hackathon_detail.json`에 상세 데이터가 없어 "상세 정보 준비 중" 안내 UI를 표시합니다. (데이터 없음 예외 처리)
+
+### 3. 팀원 모집 (`/camp`)
+- 팀 리스트 + 해커톤별 필터
+- 팀 모집글 생성 폼 (팀명 / 소개 / 포지션 / 연락 링크 / 모집 여부)
+- 팀 참여 신청 모달 + 신청 상태 배지
+- 연락하기 버튼 (contact.url 연결)
+
+### 4. 랭킹 (`/rankings`)
+- 글로벌 랭킹 테이블 (순위 메달 + 팀명 + 해커톤 + 점수)
+- **기간 필터** (전체 / 최근 30일 / 최근 7일)
+- **해커톤별 필터** (전체 해커톤 / 개별 해커톤)
+
+### 5. 공통
+- 상단 네비게이션 바 (현재 페이지 active 표시)
+- 로딩 / 빈 상태 / 에러 UI 3종 (모든 페이지 적용)
+- localStorage 시드 버전 관리 (`SEED_VERSION`) — 데이터 변경 시 자동 재초기화
+
+---
+
+## 🚀 확장 기능
+
+명세서 기본 요구사항 외에 추가한 기능들입니다.
+
+### 🤖 1. AI 팀 매칭 (핵심 확장 기능)
+
+**위치**: `/camp` 페이지 상단 패널 + 해커톤 상세 팀 탭
+
+**동작 방식**:
+1. 사용자가 기술스택과 관심 태그 입력
+2. Claude API(`claude-sonnet-4-20250514`)가 팀 목록을 분석
+3. 상위 3팀 + 추천 이유 카드 표시
+4. 추천 카드에서 바로 참여 신청 가능
+
+**왜 만들었나요?**  
+해커톤에서 팀을 찾는 과정은 수많은 팀 소개글을 직접 읽어야 해서 시간이 걸립니다. AI가 내 스택과 관심사를 분석해 적합한 팀을 추천해주면 팀 빌딩 경험이 훨씬 빨라집니다.
+
+> API 키는 Vercel 환경변수로 관리하며 클라이언트에 노출되지 않습니다.
+
+---
+
+### 📬 2. 팀 쪽지 기능
+
+**위치**: `/camp` 팀 카드 → "💌 쪽지 보내기" / "📬 쪽지함"
+
+**동작 방식**:
+1. 관심 있는 팀 카드에서 "💌 쪽지 보내기" 클릭
+2. 이름 + 메시지 입력 후 전송 (localStorage 저장)
+3. 팀은 "📬 쪽지함" 버튼으로 받은 쪽지 확인
+4. 읽지 않은 쪽지는 빨간 뱃지 + 보라색 강조로 표시
+5. 클릭 시 읽음 처리
+
+**왜 만들었나요?**  
+기존 "연락하기"는 외부 채널(카카오톡 등)로 이동해야 했습니다. 플랫폼 안에서 바로 쪽지를 보내고 받을 수 있으면 팀 탐색 → 연락 → 합류까지 한 흐름으로 완결됩니다. (명세서에서 "있으면 Best!!!"로 강조된 기능)
+
+---
+
+### 📊 3. 제출 → 리더보드 즉시 반영
+
+**위치**: 해커톤 상세 → 제출 탭
+
+**동작 방식**:
+1. 팀명 입력 + 제출 폼 작성 후 "제출하기" 클릭
+2. submissions localStorage에 저장
+3. 리더보드 탭에 즉시 반영 ("채점 중" 배지로 표시)
+
+**왜 만들었나요?**  
+제출과 리더보드가 연결되지 않으면 서비스로서 완결성이 없습니다. 실제 채점 시스템은 없지만 제출 → 리더보드 반영 흐름을 구현해 실제 서비스와 동일한 사용자 경험을 제공합니다.
+
+---
+
+### 🗓 4. 일정 타임라인 시각화
+
+**위치**: 해커톤 상세 → 일정 탭
+
+**동작 방식**:
+- 세로 타임라인 형태로 일정 표시
+- 지난 날짜: 흐리게 처리 + 파란 점
+- 현재 진행 중인 단계: 파란 링 강조 + "진행 중" 배지
+- 앞으로의 일정: 회색 점
+
+**왜 만들었나요?**  
+텍스트 리스트보다 타임라인이 "지금 어느 단계인지"를 한눈에 파악하기 쉽습니다. 특히 daker 해커톤처럼 일정이 많은 경우 유용합니다.
+
+---
+
+## 📂 프로젝트 구조
+
+```
+app/
+├── page.tsx                    # 메인 페이지
+├── hackathons/
+│   ├── page.tsx                # 해커톤 목록
+│   └── [slug]/page.tsx         # 해커톤 상세 (7개 탭)
+├── camp/page.tsx               # 팀원 모집
+├── rankings/page.tsx           # 랭킹
+└── api/match/route.ts          # Claude AI 매칭 API Route
+lib/
+├── storage.ts                  # localStorage 헬퍼
+├── seed.ts                     # 초기 데이터 시드 (버전 관리)
+└── types.ts                    # 타입 정의
+data/
+├── public_hackathons.json
+├── public_hackathon_detail.json
+├── public_teams.json
+└── public_leaderboard.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 로컬 실행 방법
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# 패키지 설치
+npm install
 
-## Learn More
+# 환경변수 설정 (.env.local)
+ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
 
-To learn more about Next.js, take a look at the following resources:
+# 개발 서버 실행
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> AI 팀 매칭 기능은 `ANTHROPIC_API_KEY` 없이는 동작하지 않습니다.  
+> Vercel 배포 환경에서는 환경변수가 등록되어 있어 정상 동작합니다.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 📝 심사 기준별 구현 포인트
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| 심사 기준 | 구현 내용 |
+|----------|----------|
+| 기본 구현 (30점) | JSON 4종 데이터 100% 반영, 필터/정렬 동작, 빈 상태/에러/로딩 UI 3종 |
+| 확장 아이디어 (30점) | AI 팀 매칭, 쪽지 기능, 제출→리더보드 반영, 일정 타임라인 |
+| 완성도 (25점) | 네비 active, D-day 뱃지, 채점 중 배지, 예외 처리, 반응형 레이아웃 |
+| 발표/문서 (15점) | 본 README 참고 |
