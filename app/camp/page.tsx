@@ -12,6 +12,16 @@ interface AIRecommendation {
   reason: string
 }
 
+interface Message {
+  id: string
+  fromName: string
+  toTeamCode: string
+  toTeamName: string
+  content: string
+  sentAt: string
+  read: boolean
+}
+
 function CampContent() {
   const searchParams = useSearchParams()
   const hackathonFilter = searchParams.get('hackathon') ?? 'all'
@@ -34,6 +44,14 @@ function CampContent() {
   const [aiResults, setAiResults] = useState<AIRecommendation[]>([])
   const [aiError, setAiError] = useState('')
 
+  // 쪽지 관련 state
+  const [msgTarget, setMsgTarget] = useState<Team | null>(null)
+  const [msgFrom, setMsgFrom] = useState('')
+  const [msgContent, setMsgContent] = useState('')
+  const [messages, setMessages] = useState<Message[]>([])
+  const [showInbox, setShowInbox] = useState(false)
+  const [inboxTeamCode, setInboxTeamCode] = useState('')
+
   useEffect(() => {
     try {
       const data = storageGet<Team[]>('teams')
@@ -41,6 +59,8 @@ function CampContent() {
       else setError(true)
       const requests = storageGet<Record<string, string>>('join_requests') ?? {}
       setJoinRequests(requests)
+      const msgs = storageGet<Message[]>('messages') ?? []
+      setMessages(msgs)
     } catch {
       setError(true)
     } finally {
@@ -105,6 +125,35 @@ function CampContent() {
       setAiLoading(false)
     }
   }
+
+  function sendMessage() {
+    if (!msgTarget || !msgFrom || !msgContent) return
+    const newMsg: Message = {
+      id: `msg-${Date.now()}`,
+      fromName: msgFrom,
+      toTeamCode: msgTarget.teamCode,
+      toTeamName: msgTarget.name,
+      content: msgContent,
+      sentAt: new Date().toISOString(),
+      read: false,
+    }
+    const updated = [...messages, newMsg]
+    storageSet('messages', updated)
+    setMessages(updated)
+    setMsgTarget(null)
+    setMsgFrom('')
+    setMsgContent('')
+    alert('쪽지를 보냈어요! 💌')
+  }
+
+  function markAsRead(msgId: string) {
+    const updated = messages.map((m) => m.id === msgId ? { ...m, read: true } : m)
+    storageSet('messages', updated)
+    setMessages(updated)
+  }
+
+  const inboxMessages = messages.filter((m) => m.toTeamCode === inboxTeamCode)
+  const unreadCount = (teamCode: string) => messages.filter((m) => m.toTeamCode === teamCode && !m.read).length
 
   if (loading) return <LoadingUI />
   if (error) return <ErrorUI />
@@ -254,7 +303,26 @@ function CampContent() {
               )}
               <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
                 <span className="text-xs text-gray-400">멤버 {team.memberCount}명</span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {/* 쪽지함 버튼 */}
+                  <button
+                    onClick={() => { setInboxTeamCode(team.teamCode); setShowInbox(true) }}
+                    className="relative text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  >
+                    📬 쪽지함
+                    {unreadCount(team.teamCode) > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {unreadCount(team.teamCode)}
+                      </span>
+                    )}
+                  </button>
+                  {/* 쪽지 보내기 버튼 */}
+                  <button
+                    onClick={() => { setMsgTarget(team); setMsgFrom(''); setMsgContent('') }}
+                    className="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:border-purple-400 hover:text-purple-600 transition-colors"
+                  >
+                    💌 쪽지 보내기
+                  </button>
                   {team.contact?.url && (
                     <a
                       href={team.contact.url}
@@ -309,6 +377,80 @@ function CampContent() {
                 취소
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 쪽지 보내기 모달 */}
+      {msgTarget && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 flex flex-col gap-4">
+            <h2 className="font-semibold text-gray-900">💌 "{msgTarget.name}" 팀에 쪽지 보내기</h2>
+            <input
+              placeholder="보내는 사람 이름 *"
+              value={msgFrom}
+              onChange={(e) => setMsgFrom(e.target.value)}
+              className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400"
+            />
+            <textarea
+              placeholder="쪽지 내용을 작성해주세요 *"
+              value={msgContent}
+              onChange={(e) => setMsgContent(e.target.value)}
+              className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 resize-none h-32"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={sendMessage}
+                disabled={!msgFrom || !msgContent}
+                className="flex-1 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 disabled:opacity-50"
+              >
+                보내기
+              </button>
+              <button
+                onClick={() => setMsgTarget(null)}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-600 text-sm rounded-xl hover:bg-gray-200"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 쪽지함 모달 */}
+      {showInbox && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-gray-900">
+                📬 {teams.find(t => t.teamCode === inboxTeamCode)?.name} 쪽지함
+              </h2>
+              <button onClick={() => setShowInbox(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            {inboxMessages.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">받은 쪽지가 없습니다</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {inboxMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    onClick={() => markAsRead(msg.id)}
+                    className={`p-4 rounded-xl border cursor-pointer transition-colors ${
+                      msg.read ? 'border-gray-100 bg-gray-50' : 'border-purple-200 bg-purple-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-800">
+                        {!msg.read && <span className="w-2 h-2 bg-purple-500 rounded-full inline-block mr-1.5" />}
+                        {msg.fromName}
+                      </span>
+                      <span className="text-xs text-gray-400">{msg.sentAt.slice(0, 16).replace('T', ' ')}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">{msg.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
